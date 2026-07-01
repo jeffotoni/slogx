@@ -1,4 +1,4 @@
-package slogx_test
+package log_test
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jeffotoni/slogx"
+	"github.com/jeffotoni/log"
 )
 
 type failWriter struct {
@@ -23,7 +23,7 @@ func (w failWriter) Write([]byte) (int, error) {
 }
 
 func TestNew_DefaultConfig(t *testing.T) {
-	logger := slogx.New()
+	logger := log.New()
 	if logger == nil {
 		t.Fatal("expected logger instance, got nil")
 	}
@@ -34,23 +34,23 @@ func TestNew_DefaultConfig(t *testing.T) {
 	if cfg.FieldByName("Writer").IsNil() {
 		t.Error("expected default Writer (os.Stdout), got nil")
 	}
-	if cfg.FieldByName("TimeFormat").String() != slogx.LayoutDefault {
-		t.Errorf("expected default TimeFormat=%s, got %s", slogx.LayoutDefault, cfg.FieldByName("TimeFormat").String())
+	if cfg.FieldByName("TimeFormat").String() != log.LayoutDefault {
+		t.Errorf("expected default TimeFormat=%s, got %s", log.LayoutDefault, cfg.FieldByName("TimeFormat").String())
 	}
-	if slogx.Level(cfg.FieldByName("Level").String()) != slogx.INFO {
+	if log.Level(cfg.FieldByName("Level").String()) != log.INFO {
 		t.Errorf("expected default Level=INFO, got %s", cfg.FieldByName("Level").String())
 	}
-	if slogx.Format(cfg.FieldByName("Format").String()) != slogx.FormatJSON {
+	if log.Format(cfg.FieldByName("Format").String()) != log.FormatJSON {
 		t.Errorf("expected default Format=json, got %s", cfg.FieldByName("Format").String())
 	}
 }
 
 func TestJSON_OutputIncludesField(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Debug().Str("event", "test").Msg("ok").Send()
@@ -62,10 +62,10 @@ func TestJSON_OutputIncludesField(t *testing.T) {
 
 func TestLevelFiltering(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.WARN,
+		Level:  log.WARN,
 	})
 
 	logger.Debug().Str("k", "v").Msg("should not log").Send()
@@ -81,11 +81,11 @@ func TestLevelFiltering(t *testing.T) {
 
 func TestTimeFormatOverride(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format:     slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format:     log.FormatJSON,
 		Writer:     &buf,
-		Level:      slogx.DEBUG,
-		TimeFormat: slogx.LayoutDateTime,
+		Level:      log.DEBUG,
+		TimeFormat: log.LayoutDateTime,
 	})
 
 	logger.Info().Msg("t").Send()
@@ -99,17 +99,17 @@ func TestTimeFormatOverride(t *testing.T) {
 	if timeStr == "" {
 		t.Fatalf("expected time field in output, got: %v", m)
 	}
-	if _, err := time.Parse(slogx.LayoutDateTime, timeStr); err != nil {
-		t.Fatalf("expected time to parse with layout %q, got %q: %v", slogx.LayoutDateTime, timeStr, err)
+	if _, err := time.Parse(log.LayoutDateTime, timeStr); err != nil {
+		t.Fatalf("expected time to parse with layout %q, got %q: %v", log.LayoutDateTime, timeStr, err)
 	}
 }
 
 func TestTraceLevelRendersAsTRACE(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.TRACE,
+		Level:  log.TRACE,
 	})
 
 	logger.Trace().Msg("t").Send()
@@ -126,10 +126,10 @@ func TestTraceLevelRendersAsTRACE(t *testing.T) {
 
 func TestJSONField_EmbedsObject(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Info().JSON("payload", []byte(`{"a":1}`)).Msg("x").Send()
@@ -141,10 +141,10 @@ func TestJSONField_EmbedsObject(t *testing.T) {
 
 func TestJSONField_InvalidJSONFallsBackToString(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Info().JSON("payload", []byte("{not json")).Msg("x").Send()
@@ -161,10 +161,10 @@ func TestJSONField_InvalidJSONFallsBackToString(t *testing.T) {
 
 func TestAny_MapIsSerialized(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Info().Any("data", map[string]int{"a": 1}).Msg("x").Send()
@@ -184,10 +184,10 @@ func TestAny_MapIsSerialized(t *testing.T) {
 
 func TestAny_BytesAutoDetectJSON(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Info().Any("payload", []byte(`{"a":1}`)).Msg("x").Send()
@@ -203,10 +203,10 @@ func TestAny_BytesAutoDetectJSON(t *testing.T) {
 
 func TestAny_BytesFallbackToString(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Info().Any("payload", []byte("hello")).Msg("x").Send()
@@ -222,15 +222,15 @@ func TestAny_BytesFallbackToString(t *testing.T) {
 
 func TestCtx_ImportsFieldsIntoEntry(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
-	ctx, cancel := slogx.NewCtx().Set("X-User-ID", "user42").Build()
+	ctx, cancel := log.NewCtx().Set("X-User-ID", "user42").Build()
 	defer cancel()
-	ctx = slogx.WithCtx(ctx).Any("attempt", 3).Context()
+	ctx = log.WithCtx(ctx).Any("attempt", 3).Context()
 
 	logger.Info().Ctx(ctx).Msg("x").Send()
 
@@ -250,10 +250,10 @@ func TestCtx_ImportsFieldsIntoEntry(t *testing.T) {
 func TestFormats_TextAndSlog(t *testing.T) {
 	t.Run("text", func(t *testing.T) {
 		var buf bytes.Buffer
-		logger := slogx.New(slogx.Config{
-			Format:    slogx.FormatText,
+		logger := log.New(log.Config{
+			Format:    log.FormatText,
 			Writer:    &buf,
-			Level:     slogx.DEBUG,
+			Level:     log.DEBUG,
 			Separator: " | ",
 		})
 
@@ -272,10 +272,10 @@ func TestFormats_TextAndSlog(t *testing.T) {
 
 	t.Run("slog", func(t *testing.T) {
 		var buf bytes.Buffer
-		logger := slogx.New(slogx.Config{
-			Format: slogx.FormatSlog,
+		logger := log.New(log.Config{
+			Format: log.FormatSlog,
 			Writer: &buf,
-			Level:  slogx.DEBUG,
+			Level:  log.DEBUG,
 		})
 
 		logger.Info().TraceID("abc123").Str("k", "v").Msg("m").Send()
@@ -289,13 +289,13 @@ func TestFormats_TextAndSlog(t *testing.T) {
 func TestEntry_UsesProvidedContext(t *testing.T) {
 	var got any
 	ctx := context.WithValue(context.Background(), struct{}{}, "v")
-	ctx = slogx.WithCtx(ctx).Any("x", "y").Context()
+	ctx = log.WithCtx(ctx).Any("x", "y").Context()
 
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Info().Ctx(ctx).Msg("x").Send()
@@ -310,10 +310,10 @@ func TestEntry_UsesProvidedContext(t *testing.T) {
 
 func TestEntry_ErrDefaultKey(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Error().Err(errors.New("boom")).Msg("x").Send()
@@ -329,10 +329,10 @@ func TestEntry_ErrDefaultKey(t *testing.T) {
 
 func TestEntry_ErrCustomKey(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Error().Err("db_err", errors.New("boom")).Msg("x").Send()
@@ -348,10 +348,10 @@ func TestEntry_ErrCustomKey(t *testing.T) {
 
 func TestEntry_Action(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Info().Action("login").Msg("x").Send()
@@ -367,10 +367,10 @@ func TestEntry_Action(t *testing.T) {
 
 func TestEntry_Time(t *testing.T) {
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	tm := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
@@ -389,10 +389,10 @@ func TestEntry_Number(t *testing.T) {
 	type myInt int
 
 	var buf bytes.Buffer
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	logger.Info().
@@ -441,10 +441,10 @@ func TestEntry_Number(t *testing.T) {
 
 func TestSend_ReturnsWriterError(t *testing.T) {
 	expectedErr := errors.New("write failed")
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: failWriter{err: expectedErr},
-		Level:  slogx.DEBUG,
+		Level:  log.DEBUG,
 	})
 
 	err := logger.Info().Msg("x").Send()
@@ -457,10 +457,10 @@ func TestSend_ReturnsWriterError(t *testing.T) {
 }
 
 func TestSend_DisabledLevelSkipsWriterAndReturnsNil(t *testing.T) {
-	logger := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: failWriter{err: errors.New("write failed")},
-		Level:  slogx.ERROR,
+		Level:  log.ERROR,
 	})
 
 	err := logger.Info().Msg("x").Send()

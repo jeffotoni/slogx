@@ -1,4 +1,4 @@
-package slogx_test
+package log_test
 
 import (
 	"context"
@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jeffotoni/slogx"
+	"github.com/jeffotoni/log"
 )
 
 func TestNewCtx_Basic(t *testing.T) {
-	ctx, cancel := slogx.NewCtx().Set("TraceID", "abc123").Build()
+	ctx, cancel := log.NewCtx().Set("TraceID", "abc123").Build()
 	defer cancel()
 
-	if got := slogx.CtxGet(ctx, "TraceID"); got != "abc123" {
+	if got := log.CtxGet(ctx, "TraceID"); got != "abc123" {
 		t.Fatalf("expected TraceID=abc123, got %q", got)
 	}
 }
@@ -22,7 +22,7 @@ func TestNewCtx_CustomParentPreservesDeadline(t *testing.T) {
 	parent, parentCancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer parentCancel()
 
-	ctx, cancel := slogx.NewCtx(parent).Set("k", "v").Build()
+	ctx, cancel := log.NewCtx(parent).Set("k", "v").Build()
 	defer cancel()
 
 	if _, ok := ctx.Deadline(); !ok {
@@ -31,17 +31,17 @@ func TestNewCtx_CustomParentPreservesDeadline(t *testing.T) {
 }
 
 func TestNewCtx_StringFieldsAreCumulative(t *testing.T) {
-	ctx1, cancel1 := slogx.NewCtx().
+	ctx1, cancel1 := log.NewCtx().
 		Set("a", "1").
 		Build()
 	defer cancel1()
 
-	ctx2, cancel2 := slogx.NewCtx(ctx1).
+	ctx2, cancel2 := log.NewCtx(ctx1).
 		Set("b", "2").
 		Build()
 	defer cancel2()
 
-	all := slogx.CtxGetAll(ctx2)
+	all := log.CtxGetAll(ctx2)
 	if all["a"] != "1" {
 		t.Fatalf("expected a=1, got %#v", all["a"])
 	}
@@ -51,27 +51,27 @@ func TestNewCtx_StringFieldsAreCumulative(t *testing.T) {
 }
 
 func TestWithCtx_TypedFields(t *testing.T) {
-	ctx := slogx.WithCtx(context.Background()).
+	ctx := log.WithCtx(context.Background()).
 		Any("attempt", 3).
 		TraceKey("MyTraceKey").
 		TraceID("abc123").
 		Context()
 
-	if got := slogx.CtxGet(ctx, "MyTraceKey"); got != "abc123" {
+	if got := log.CtxGet(ctx, "MyTraceKey"); got != "abc123" {
 		t.Fatalf("expected trace stored under MyTraceKey, got %q", got)
 	}
 
-	v, ok := slogx.CtxGetAny(ctx, "attempt")
+	v, ok := log.CtxGetAny(ctx, "attempt")
 	if !ok || v.(int) != 3 {
 		t.Fatalf("expected attempt=3, got (%v, %v)", v, ok)
 	}
 }
 
 func TestCtxSetAllAny_MergesExistingFields(t *testing.T) {
-	ctx := slogx.CtxSetAllAny(context.Background(), map[string]any{"a": 1})
-	ctx = slogx.CtxSetAllAny(ctx, map[string]any{"b": 2})
+	ctx := log.CtxSetAllAny(context.Background(), map[string]any{"a": 1})
+	ctx = log.CtxSetAllAny(ctx, map[string]any{"b": 2})
 
-	all := slogx.CtxGetAllAny(ctx)
+	all := log.CtxGetAllAny(ctx)
 	if all["a"] != 1 {
 		t.Fatalf("expected a=1, got %#v", all["a"])
 	}
@@ -81,10 +81,10 @@ func TestCtxSetAllAny_MergesExistingFields(t *testing.T) {
 }
 
 func TestWithCtx_TypedFieldsAreCumulative(t *testing.T) {
-	ctx1 := slogx.WithCtx(context.Background()).Any("a", 1).Context()
-	ctx2 := slogx.WithCtx(ctx1).Any("b", 2).Context()
+	ctx1 := log.WithCtx(context.Background()).Any("a", 1).Context()
+	ctx2 := log.WithCtx(ctx1).Any("b", 2).Context()
 
-	all := slogx.CtxGetAllAny(ctx2)
+	all := log.CtxGetAllAny(ctx2)
 	if all["a"] != 1 {
 		t.Fatalf("expected a=1, got %#v", all["a"])
 	}
@@ -94,20 +94,20 @@ func TestWithCtx_TypedFieldsAreCumulative(t *testing.T) {
 }
 
 func TestCtxSetAllAny_NilFieldsDoesNotClearExisting(t *testing.T) {
-	ctx := slogx.CtxSetAllAny(context.Background(), map[string]any{"a": 1})
-	ctx = slogx.CtxSetAllAny(ctx, nil)
+	ctx := log.CtxSetAllAny(context.Background(), map[string]any{"a": 1})
+	ctx = log.CtxSetAllAny(ctx, nil)
 
-	all := slogx.CtxGetAllAny(ctx)
+	all := log.CtxGetAllAny(ctx)
 	if all["a"] != 1 {
 		t.Fatalf("expected a=1 after nil update, got %#v", all["a"])
 	}
 }
 
 func TestCtxSetAllAny_OnlyEmptyKeysDoesNotClearExisting(t *testing.T) {
-	ctx := slogx.CtxSetAllAny(context.Background(), map[string]any{"a": 1})
-	ctx = slogx.CtxSetAllAny(ctx, map[string]any{"": 9})
+	ctx := log.CtxSetAllAny(context.Background(), map[string]any{"a": 1})
+	ctx = log.CtxSetAllAny(ctx, map[string]any{"": 9})
 
-	all := slogx.CtxGetAllAny(ctx)
+	all := log.CtxGetAllAny(ctx)
 	if all["a"] != 1 {
 		t.Fatalf("expected a=1 after empty-key update, got %#v", all["a"])
 	}
@@ -117,7 +117,7 @@ func TestCtxSetAllAny_OnlyEmptyKeysDoesNotClearExisting(t *testing.T) {
 }
 
 func TestNewCtx_HighCardinalityKeys(t *testing.T) {
-	builder := slogx.NewCtx()
+	builder := log.NewCtx()
 	const total = 2000
 
 	for i := 0; i < total; i++ {
@@ -132,7 +132,7 @@ func TestNewCtx_HighCardinalityKeys(t *testing.T) {
 	for i := 0; i < total; i++ {
 		k := "k" + strconv.Itoa(i)
 		want := "v" + strconv.Itoa(i)
-		if got := slogx.CtxGet(ctx, k); got != want {
+		if got := log.CtxGet(ctx, k); got != want {
 			t.Fatalf("expected %s=%s, got %q", k, want, got)
 		}
 	}

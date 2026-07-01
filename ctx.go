@@ -1,4 +1,4 @@
-package slogx
+package log
 
 import (
 	"context"
@@ -10,7 +10,7 @@ type (
 	contextKey string
 )
 
-const internalKeysKey ctxKey = "slogx.internalKeys"
+const internalKeysKey ctxKey = "log.internalKeys"
 
 func getCtxKey(name string) contextKey {
 	if name == "" {

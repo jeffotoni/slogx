@@ -1,16 +1,16 @@
-# slogx
+# log
 
-[![GoDoc](https://pkg.go.dev/badge/github.com/jeffotoni/slogx.svg)](https://pkg.go.dev/github.com/jeffotoni/slogx) [![Go Report](https://goreportcard.com/badge/github.com/jeffotoni/slogx)](https://goreportcard.com/report/github.com/jeffotoni/slogx) [![License](https://img.shields.io/github/license/jeffotoni/slogx)](https://github.com/jeffotoni/slogx/blob/main/LICENSE) ![GitHub last commit](https://img.shields.io/github/last-commit/jeffotoni/slogx) ![GitHub contributors](https://img.shields.io/github/contributors/jeffotoni/slogx)
-![GitHub forks](https://img.shields.io/github/forks/jeffotoni/slogx?style=social)
-![GitHub stars](https://img.shields.io/github/stars/jeffotoni/slogx)
+[![GoDoc](https://pkg.go.dev/badge/github.com/jeffotoni/log.svg)](https://pkg.go.dev/github.com/jeffotoni/log) [![Go Report](https://goreportcard.com/badge/github.com/jeffotoni/log)](https://goreportcard.com/report/github.com/jeffotoni/log) [![License](https://img.shields.io/github/license/jeffotoni/log)](https://github.com/jeffotoni/log/blob/main/LICENSE) ![GitHub last commit](https://img.shields.io/github/last-commit/jeffotoni/log) ![GitHub contributors](https://img.shields.io/github/contributors/jeffotoni/log)
+![GitHub forks](https://img.shields.io/github/forks/jeffotoni/log?style=social)
+![GitHub stars](https://img.shields.io/github/stars/jeffotoni/log)
 
 Fluent structured logging for Go, built on top of `log/slog`.
 
-`slogx` does **not** replace `log/slog`. It is a fluent layer that builds `slog` attributes and delegates the actual log writing to `log/slog` handlers.
+`log` does **not** replace `log/slog`. It is a fluent layer that builds `slog` attributes and delegates the actual log writing to `log/slog` handlers.
 
 ## 🎯 Who it's for
 
-`slogx` is designed for developers and teams that already use `log/slog`, rely heavily on `context.Context` to carry request-scoped data (trace IDs, user/session identifiers, etc.), and want structured logging with a fluent API and low overhead.
+`log` is designed for developers and teams that already use `log/slog`, rely heavily on `context.Context` to carry request-scoped data (trace IDs, user/session identifiers, etc.), and want structured logging with a fluent API and low overhead.
 
 ## 🧾 Formats
 
@@ -29,7 +29,7 @@ Fluent structured logging for Go, built on top of `log/slog`.
 ## Install
 
 ```bash
-go get github.com/jeffotoni/slogx
+go get github.com/jeffotoni/log
 ```
 
 ---
@@ -43,31 +43,31 @@ import (
 	"context"
 	"os"
 
-	"github.com/jeffotoni/slogx"
+	"github.com/jeffotoni/log"
 )
 
 func main() {
-	ctx := slogx.WithCtx(context.Background()).
+	ctx := log.WithCtx(context.Background()).
 		TraceID("abc123").
 		Str("X-User-ID", "user42").
 		Any("attempt", 3).
 		Context()
 
-	slogx.New(slogx.Config{Format: slogx.FormatJSON, Writer: os.Stdout, ServiceName: "api"}).
+	log.New(log.Config{Format: log.FormatJSON, Writer: os.Stdout, ServiceName: "api"}).
 		Info().
 		Ctx(ctx).
 		Str("component", "auth").
 		Msg("user login").
 		Send()
 
-	slogx.New(slogx.Config{Format: slogx.FormatText, Writer: os.Stdout, ServiceName: "api"}).
+	log.New(log.Config{Format: log.FormatText, Writer: os.Stdout, ServiceName: "api"}).
 		Info().
 		Ctx(ctx).
 		Str("component", "auth").
 		Msg("user login").
 		Send()
 
-	slogx.New(slogx.Config{Format: slogx.FormatSlog, Writer: os.Stdout, ServiceName: "api"}).
+	log.New(log.Config{Format: log.FormatSlog, Writer: os.Stdout, ServiceName: "api"}).
 		Info().
 		Ctx(ctx).
 		Str("component", "auth").
@@ -112,10 +112,10 @@ go run ./examples/demo
 ```go
 package main
 
-import "github.com/jeffotoni/slogx"
+import "github.com/jeffotoni/log"
 
 func main() {
-	err := slogx.New().
+	err := log.New().
 		Info().
 		Str("component", "bootstrap").
 		Int("attempt", 1).
@@ -150,7 +150,7 @@ if err := log.Info().
 Use `NewCtx()` to create a `context.Context` with string-only fields.
 
 ```go
-ctx, cancel := slogx.NewCtx().
+ctx, cancel := log.NewCtx().
 	Set("X-Trace-ID", "abc-123").
 	Set("X-User-ID", "user-42").
 	Set("X-Session-ID", "sess-999").
@@ -158,9 +158,9 @@ ctx, cancel := slogx.NewCtx().
 	Build()
 defer cancel()
 
-traceID := slogx.CtxGet(ctx, "X-Trace-ID") // "abc-123"
-userID := slogx.CtxGet(ctx, "X-User-ID")  // "user-42"
-fields := slogx.CtxGetAll(ctx)            // map[string]string{...}
+traceID := log.CtxGet(ctx, "X-Trace-ID") // "abc-123"
+userID := log.CtxGet(ctx, "X-User-ID")  // "user-42"
+fields := log.CtxGetAll(ctx)            // map[string]string{...}
 ```
 
 Notes:
@@ -174,28 +174,28 @@ Notes:
 Use `WithCtx(ctx)` to attach typed values (int/bool/map/etc) to an existing context.
 
 ```go
-ctx := slogx.WithCtx(context.Background()).
+ctx := log.WithCtx(context.Background()).
 	Any("attempt", 3).
 	Bool("cached", true).
 	Str("role", "admin").
 	Context()
 
-v, _ := slogx.CtxGetAny(ctx, "attempt") // 3
-all := slogx.CtxGetAllAny(ctx)          // map[string]any{...}
+v, _ := log.CtxGetAny(ctx, "attempt") // 3
+all := log.CtxGetAllAny(ctx)          // map[string]any{...}
 ```
 
 Typed fields are cumulative across calls:
 
 ```go
-ctx1 := slogx.WithCtx(context.Background()).
+ctx1 := log.WithCtx(context.Background()).
 	Any("a", 1).
 	Context()
 
-ctx2 := slogx.WithCtx(ctx1).
+ctx2 := log.WithCtx(ctx1).
 	Any("b", 2).
 	Context()
 
-all := slogx.CtxGetAllAny(ctx2) // map[string]any{"a":1,"b":2}
+all := log.CtxGetAllAny(ctx2) // map[string]any{"a":1,"b":2}
 ```
 
 ---
@@ -207,13 +207,13 @@ all := slogx.CtxGetAllAny(ctx2) // map[string]any{"a":1,"b":2}
 2) **imports** fields from context into the log entry (`string` + `typed`)
 
 ```go
-ctx := slogx.WithCtx(context.Background()).
+ctx := log.WithCtx(context.Background()).
 	TraceID("abc123").
 	Str("X-User-ID", "user42").
 	Any("attempt", 3).
 	Context()
 
-log := slogx.New(slogx.Config{Format: slogx.FormatJSON, ServiceName: "api"})
+log := log.New(log.Config{Format: log.FormatJSON, ServiceName: "api"})
 log.Info().
 	Ctx(ctx).
 	Msg("request").
@@ -238,7 +238,7 @@ Tip: set request-wide defaults in the context, call `Entry.Ctx(ctx)` to import t
 
 ## 🧼 Empty keys and empty string values
 
-`slogx` treats empty keys (`""`) and empty string values differently depending on the API:
+`log` treats empty keys (`""`) and empty string values differently depending on the API:
 
 - **Empty keys (`""`)** are ignored across the board: setters on `Entry`, `NewCtx().Set`, and `WithCtx(...).Any/Str` become no-ops.
 - **Empty string values**:
@@ -257,7 +257,7 @@ Tip: set request-wide defaults in the context, call `Entry.Ctx(ctx)` to import t
 - Context fields are imported into the log entry only when explicitly requested via `Entry.Ctx(ctx)`.
 - `WithCtx(ctx)` avoids copying typed fields unless you actually add/modify fields and call `Context()`.
 - If `WithCtx(ctx)` does not add fields, `Context()` returns the original `ctx` (no extra `context.WithValue`).
-- If the provided `ctx` has no `slogx` fields, `Entry.Ctx(ctx)` short-circuits without extra merge allocations.
+- If the provided `ctx` has no `log` fields, `Entry.Ctx(ctx)` short-circuits without extra merge allocations.
 
 ---
 
@@ -298,12 +298,12 @@ Example output (Apple M3 Max, darwin/arm64):
 ```text
 goos: darwin
 goarch: arm64
-pkg: slogx-bench
+pkg: log-bench
 cpu: Apple M3 Max
-BenchmarkSlogx_Text-16            	43445082	       181.0 ns/op	       0 B/op	       0 allocs/op
-BenchmarkSlogx_JSON-16            	35682792	       240.0 ns/op	       0 B/op	       0 allocs/op
-BenchmarkSlogx_Text_WithCtx-16    	34005211	       249.3 ns/op	       0 B/op	       0 allocs/op
-BenchmarkSlogx_JSON_WithCtx-16    	25595169	       329.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLog_Text-16            	43445082	       181.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLog_JSON-16            	35682792	       240.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLog_Text_WithCtx-16    	34005211	       249.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkLog_JSON_WithCtx-16    	25595169	       329.8 ns/op	       0 B/op	       0 allocs/op
 BenchmarkGlog_Text-16             	56735336	       148.2 ns/op	       0 B/op	       0 allocs/op
 BenchmarkGlog_JSON-16             	32962898	       254.7 ns/op	      32 B/op	       1 allocs/op
 BenchmarkZerolog_JSON-16          	52502023	       156.2 ns/op	       0 B/op	       0 allocs/op
@@ -333,8 +333,8 @@ Reading: lower is better.
 Highlights:
 - 🥇 Glog Text (~148 ns/op)
 - 🥈 Zerolog JSON (~156 ns/op)
-- 🥉 Slogx Text (~181 ns/op)
-- The cost of `WithCtx` in `slogx` shows up clearly, but remains competitive.
+- 🥉 Log Text (~181 ns/op)
+- The cost of `WithCtx` in `log` shows up clearly, but remains competitive.
 - Zerolog Text and Logrus stand out dramatically in this chart (good for storytelling 😈).
 
 🚀 Chart 2 — Throughput (iterations)
@@ -348,7 +348,7 @@ Here we use the raw benchmark iteration counts, for example:
 
 Highlights:
 - Glog Text (~56.7M) and Zerolog JSON (~52.5M) lead.
-- Slogx Text (~43.4M) is strong and consistent.
+- Log Text (~43.4M) is strong and consistent.
 - Zerolog Text drops to ~2.3M → huge visual contrast.
 - Logrus confirms low throughput.
 
@@ -370,7 +370,7 @@ Highlights:
 By default, the trace key is `traceId`. You can change it per logger/config:
 
 ```go
-log := slogx.New(slogx.Config{TraceIDKey: "X-Trace-ID"})
+log := log.New(log.Config{TraceIDKey: "X-Trace-ID"})
 log.Info().
 	TraceID("abc123").
 	Msg("x").
@@ -380,13 +380,13 @@ log.Info().
 For contexts, you can also change the key on the builders:
 
 ```go
-ctx, cancel := slogx.NewCtx().
+ctx, cancel := log.NewCtx().
 	TraceKey("X-Trace-ID").
 	TraceID("abc123").
 	Build()
 defer cancel()
 
-ctx = slogx.WithCtx(ctx).
+ctx = log.WithCtx(ctx).
 	TraceKey("X-Trace-ID").
 	TraceID("abc123").
 	Context()
@@ -430,10 +430,10 @@ This guarantees the final log output is always valid JSON (in `FormatJSON`).
 
 ```go
 type Config struct {
-	Format     slogx.Format // json|text|slog
+	Format     log.Format // json|text|slog
 	Writer     io.Writer    // default: os.Stdout
 	TimeFormat string       // default: RFC3339
-	Level      slogx.Level  // default: INFO
+	Level      log.Level  // default: INFO
 	Separator  string       // default: " | " (text) or " " (others)
 
 	ServiceName string // adds "service" to every entry
@@ -447,7 +447,7 @@ type Config struct {
 
 ```go
 // JSON to stdout (default format is json if omitted).
-log := slogx.New(slogx.Config{Format: slogx.FormatJSON})
+log := log.New(log.Config{Format: log.FormatJSON})
 log.Info().
 	Str("component", "api").
 	Msg("ready").
@@ -456,8 +456,8 @@ log.Info().
 
 ```go
 // Human-friendly text format with a custom separator.
-log := slogx.New(slogx.Config{
-	Format:    slogx.FormatText,
+log := log.New(log.Config{
+	Format:    log.FormatText,
 	Separator: " | ",
 })
 log.Info().
@@ -468,7 +468,7 @@ log.Info().
 
 ```go
 // Configure trace key + service name.
-log := slogx.New(slogx.Config{
+log := log.New(log.Config{
 	ServiceName: "api",
 	TraceIDKey:  "X-Trace-ID",
 })
@@ -502,7 +502,7 @@ log.Info().
 
 ```go
 // Context defaults + per-entry overrides (last-write-wins).
-ctx := slogx.WithCtx(context.Background()).
+ctx := log.WithCtx(context.Background()).
 	Str("role", "user").
 	Any("attempt", 1).
 	Context()
@@ -525,21 +525,21 @@ import (
 	"os"
 	"time"
 
-	"github.com/jeffotoni/slogx"
+	"github.com/jeffotoni/log"
 )
 
 func main() {
-	log := slogx.New(slogx.Config{
-		Format:      slogx.FormatText,
+	log := log.New(log.Config{
+		Format:      log.FormatText,
 		Writer:      os.Stdout,
-		TimeFormat:  slogx.LayoutISO8601Nano,
-		Level:       slogx.DEBUG,
+		TimeFormat:  log.LayoutISO8601Nano,
+		Level:       log.DEBUG,
 		Separator:   " | ",
 		ServiceName: "api",
 		TraceIDKey:  "X-Trace-ID",
 	})
 
-	ctx, cancel := slogx.NewCtx(context.Background()).
+	ctx, cancel := log.NewCtx(context.Background()).
 		TraceKey("X-Trace-ID").
 		TraceID("abc123").
 		Set("X-User-ID", "user42").
@@ -547,7 +547,7 @@ func main() {
 		Build()
 	defer cancel()
 
-	ctx = slogx.WithCtx(ctx).
+	ctx = log.WithCtx(ctx).
 		Any("attempt", 3).
 		Bool("cached", true).
 		Any("meta", map[string]any{"a": 1, "b": "x"}).
@@ -588,6 +588,6 @@ If you like this project, give it a ⭐ star and feel free to open issues or PRs
 
 ## Notes
 
-- `FormatJSON` and `FormatText` are implemented by `slogx` handlers (they implement `log/slog.Handler`).
+- `FormatJSON` and `FormatText` are implemented by `log` handlers (they implement `log/slog.Handler`).
 - `FormatSlog` delegates to the standard library `log/slog` text handler.
 - Field ordering is not guaranteed (especially for fields imported from context maps).

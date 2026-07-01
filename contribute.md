@@ -1,13 +1,13 @@
-# Contributing to slogx
+# Contributing to log
 
-Thanks for your interest in contributing to `slogx`.
+Thanks for your interest in contributing to `log`.
 
 ## How To Contribute
 
 1. Fork the repository and clone it:
 ```bash
-git clone https://github.com/jeffotoni/slogx.git
-cd slogx
+git clone https://github.com/jeffotoni/log.git
+cd log
 ```
 
 2. Create a branch:
@@ -45,7 +45,7 @@ git push origin feat/short-description
 ## Reporting Issues
 
 Please use the issues page:
-[https://github.com/jeffotoni/slogx/issues](https://github.com/jeffotoni/slogx/issues)
+[https://github.com/jeffotoni/log/issues](https://github.com/jeffotoni/log/issues)
 
 When possible, include:
 - Go version

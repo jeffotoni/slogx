@@ -1,4 +1,3 @@
-
 // Example:
 // curl -i -XPOST -H "Content-Type: application/json" localhost:8080/v1/user -d '{"name":"jeff","year":2026}'
 package main
@@ -14,7 +13,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/jeffotoni/slogx"
+	"github.com/jeffotoni/log"
 )
 
 const traceHeader = "X-Trace-ID"
@@ -29,11 +28,11 @@ type createUserResponse struct {
 	TraceID string `json:"traceId"`
 }
 
-var log = slogx.New(slogx.Config{
-	Format:      slogx.FormatJSON,
+var logger = log.New(log.Config{
+	Format:      log.FormatJSON,
 	Writer:      os.Stdout,
-	TimeFormat:  slogx.LayoutISO8601Nano,
-	Level:       slogx.DEBUG,
+	TimeFormat:  log.LayoutISO8601Nano,
+	Level:       log.DEBUG,
 	ServiceName: "api-user",
 	TraceIDKey:  traceHeader,
 })
@@ -43,7 +42,7 @@ func main() {
 	mux.HandleFunc("/v1/user", handleCreateUser)
 
 	addr := ":8080"
-	if err := log.Info().
+	if err := logger.Info().
 		Action("startup").
 		Str("addr", addr).
 		Msg("http server starting").
@@ -58,7 +57,7 @@ func main() {
 	}
 
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		_ = log.Error().
+		_ = logger.Error().
 			Action("startup").
 			Err("error", err).
 			Msg("http server stopped unexpectedly").
@@ -73,7 +72,7 @@ func handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		traceID = newTraceID()
 	}
 
-	ctx, cancel := slogx.NewCtx(r.Context()).
+	ctx, cancel := log.NewCtx(r.Context()).
 		TraceKey(traceHeader).
 		TraceID(traceID).
 		Set("X-User-ID", "user3039").
@@ -82,14 +81,14 @@ func handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		Build()
 	defer cancel()
 
-	ctx = slogx.WithCtx(ctx).
+	ctx = log.WithCtx(ctx).
 		Any("attempt", 1).
 		Bool("cached", false).
 		Context()
 
 	var req createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		if sendErr := log.Error().
+		if sendErr := logger.Error().
 			Ctx(ctx).
 			Component("http").
 			Action("decode_body").
@@ -102,7 +101,7 @@ func handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := log.Debug().
+	if err := logger.Debug().
 		Ctx(ctx).
 		Component("http").
 		Action("validate").
@@ -114,7 +113,7 @@ func handleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := saveSomeWhere(ctx, req); err != nil {
-		if sendErr := log.Error().
+		if sendErr := logger.Error().
 			Ctx(ctx).
 			Component("handler").
 			Action("save").
@@ -137,7 +136,7 @@ func handleCreateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(resp)
 
-	if err := log.Info().
+	if err := logger.Info().
 		Ctx(ctx).
 		Component("handler").
 		Action("response").
@@ -154,7 +153,7 @@ func saveSomeWhere(ctx context.Context, req createUserRequest) error {
 		return err
 	}
 
-	if err := log.Debug().
+	if err := logger.Debug().
 		Ctx(ctx).
 		Component("storage").
 		Action("marshal").
@@ -170,7 +169,7 @@ func saveSomeWhere(ctx context.Context, req createUserRequest) error {
 func sendQueue(ctx context.Context, payload []byte) error {
 	time.Sleep(50 * time.Millisecond)
 
-	if err := log.Debug().
+	if err := logger.Debug().
 		Ctx(ctx).
 		Component("queue").
 		Action("send").

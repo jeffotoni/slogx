@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jeffotoni/slogx"
+	"github.com/jeffotoni/log"
 )
 
 func main() {
-	ctx := slogx.WithCtx(context.Background()).
+	ctx := log.WithCtx(context.Background()).
 		TraceID("abc123").
 		Str("X-User-ID", "user42").
 		Any("attempt", 3).
 		Context()
 
 	fmt.Println("== json ==")
-	if err := slogx.New(slogx.Config{
-		Format:      slogx.FormatJSON,
+	if err := log.New(log.Config{
+		Format:      log.FormatJSON,
 		Writer:      os.Stdout,
-		Level:       slogx.DEBUG,
+		Level:       log.DEBUG,
 		ServiceName: "api",
 	}).
 		Info().
@@ -31,10 +31,10 @@ func main() {
 	}
 
 	fmt.Println("== text ==")
-	if err := slogx.New(slogx.Config{
-		Format:      slogx.FormatText,
+	if err := log.New(log.Config{
+		Format:      log.FormatText,
 		Writer:      os.Stdout,
-		Level:       slogx.DEBUG,
+		Level:       log.DEBUG,
 		ServiceName: "api",
 	}).
 		Info().
@@ -46,10 +46,10 @@ func main() {
 	}
 
 	fmt.Println("== slog ==")
-	if err := slogx.New(slogx.Config{
-		Format:      slogx.FormatSlog,
+	if err := log.New(log.Config{
+		Format:      log.FormatSlog,
 		Writer:      os.Stdout,
-		Level:       slogx.DEBUG,
+		Level:       log.DEBUG,
 		ServiceName: "api",
 	}).
 		Info().

@@ -1,4 +1,4 @@
-package slogx_test
+package log_test
 
 import (
 	"bytes"
@@ -7,18 +7,18 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jeffotoni/slogx"
+	"github.com/jeffotoni/log"
 )
 
 func ExampleNewCtx() {
-	ctx, cancel := slogx.NewCtx().
+	ctx, cancel := log.NewCtx().
 		Set("X-Trace-ID", "abc-123").
 		Set("X-User-ID", "user-42").
 		Build()
 	defer cancel()
 
-	fmt.Println(slogx.CtxGet(ctx, "X-Trace-ID"))
-	fmt.Println(slogx.CtxGet(ctx, "X-User-ID"))
+	fmt.Println(log.CtxGet(ctx, "X-Trace-ID"))
+	fmt.Println(log.CtxGet(ctx, "X-User-ID"))
 
 	// Output:
 	// abc-123
@@ -26,12 +26,12 @@ func ExampleNewCtx() {
 }
 
 func ExampleWithCtx() {
-	ctx := slogx.WithCtx(context.Background()).
+	ctx := log.WithCtx(context.Background()).
 		Any("attempt", 3).
 		Bool("cached", true).
 		Context()
 
-	v, _ := slogx.CtxGetAny(ctx, "attempt")
+	v, _ := log.CtxGetAny(ctx, "attempt")
 	fmt.Println(v)
 
 	// Output:
@@ -40,17 +40,17 @@ func ExampleWithCtx() {
 
 func ExampleEntry_Ctx() {
 	var buf bytes.Buffer
-	log := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.INFO,
+		Level:  log.INFO,
 	})
 
-	ctx := slogx.WithCtx(context.Background()).
+	ctx := log.WithCtx(context.Background()).
 		Any("attempt", 3).
 		Context()
 
-	log.Info().
+	logger.Info().
 		Ctx(ctx).
 		Str("component", "auth").
 		Msg("request").
@@ -69,13 +69,13 @@ func ExampleEntry_Ctx() {
 
 func ExampleEntry_Number() {
 	var buf bytes.Buffer
-	log := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.INFO,
+		Level:  log.INFO,
 	})
 
-	log.Info().
+	logger.Info().
 		Number("status", 200).
 		Number("bytes", int64(1234)).
 		Number("latency_ms", 12.3).
@@ -95,13 +95,13 @@ func ExampleEntry_Number() {
 
 func ExampleEntry_Err() {
 	var buf bytes.Buffer
-	log := slogx.New(slogx.Config{
-		Format: slogx.FormatJSON,
+	logger := log.New(log.Config{
+		Format: log.FormatJSON,
 		Writer: &buf,
-		Level:  slogx.INFO,
+		Level:  log.INFO,
 	})
 
-	log.Error().
+	logger.Error().
 		Err(errors.New("boom")).
 		Msg("x").
 		Send()
