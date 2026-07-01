@@ -1,0 +1,62 @@
+# Go (binaries, build/test outputs)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.a
+*.o
+*.test
+*.out
+*.prof
+*.pprof
+*.trace
+*.log
+*.tmp
+coverage.out
+cover.out
+profile.out
+cpu.out
+mem.out
+__debug_bin
+
+# Go (vendoring)
+vendor/
+
+# Go (common local build dirs)
+bin/
+dist/
+tmp/
+
+# Local caches / tooling
+.gomodcache/
+.golangci-lint-cache/
+.gocache/
+.gopath/
+
+# Local scratch / proofs of concept
+.poc/
+*.poc
+
+# IDEs / Editors
+.idea/
+*.iml
+out/
+.vscode/
+.fleet/
+.history/
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
+
+# Vim / Emacs / backups
+*.swp
+*.swo
+*.swn
+*~
+\#*\#
+.\#*
+
+# OS
+.DS_Store
+Thumbs.db
